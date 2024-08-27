@@ -2,19 +2,22 @@ import os
 import time
 import json
 import shutil 
-class DeltaFile():
-    def __init__(self,path,textFilePath,mode):
+class DeltaFile:
+    def __init__(self,path,textFilePath,textFileName,mode):
         if mode not in ['generator','reader']:
             raise ValueError("Modul trebuie sa fie generator sau reader")
         self.path=path
+        self.textFileName=textFileName
+        self.textFilePath=textFilePath
         if mode=='generator':
-            os.rename(textFilePath,path+'content.txt')
+            os.rename(textFilePath+textFileName,f"{path}{textFileName}")
             os.makedirs(self.path+'versioning')
-            shutil.copyfile(self.path+'content.txt',self.path+'versioning/v1.txt')
+            shutil.copyfile(f"{path}{textFileName}",self.path+'versioning/v1.txt')
             modifiedTime=os.path.getmtime(self.path+'content.txt')
             self.__generate_log_file(modifiedTime)
             self.__listener()
         else:
+            self.textFileName=textFileName
             self.textFilePath=textFilePath
 
         
@@ -37,7 +40,7 @@ class DeltaFile():
         versions=os.listdir(self.path+'versioning')
         maxVersion=max(versions).split('.')[0][1:]
         maxVersion=str(int(maxVersion)+1)
-        shutil.copyfile('test_file/content.txt',f'test_file/versioning/v{maxVersion}.txt')
+        shutil.copyfile(f'{self.path}/{self.textFileName}',f'{self.path}/versioning/v{maxVersion}.txt')
         content=self.__get_logs()
         content[modifiedTime]=f"v{maxVersion}.txt"
         self.__save_logs(content)
@@ -73,7 +76,7 @@ class DeltaFile():
                         leftTimestamp=keys[i]
                 filepath=f"{self.path}versioning/{logs[leftTimestamp]}"
             else:
-                filepath=self.path+self.textFilePath
+                filepath=self.path+self.textFileName
         try:
             with open(filepath,'r') as file:
                 content=file.read()
@@ -83,5 +86,5 @@ class DeltaFile():
 
 
 #calling the api
-myFile=DeltaFile('test_file/', 'content.txt','reader')
-print(myFile.get_content(version=2))
+# myFile=DeltaFile('E:/IT School/Probleme/Curs35/test_file/', 'content.txt','generator')
+# print(myFile.get_content(version=1))
